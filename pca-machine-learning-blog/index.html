@@ -1,0 +1,180 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Principal Component Analysis (PCA) Explained: Breast Cancer Wisconsin Case Study</title>
+<meta name="description" content="Beginner-friendly PCA guide: intuition, mathematics, Python and eight graphs from the Breast Cancer Wisconsin Diagnostic dataset.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script></head><body>
+<a class="skip" href="#concepts">Skip to article</a>
+<header class="top"><b>PCA Explained</b><nav aria-label="Primary"><a href="#home">Home</a> &nbsp; <a href="#concepts">Concepts</a> &nbsp; <a href="#mathematics">Mathematics</a> &nbsp; <a href="#graphs">PCA Graphs</a> &nbsp; <a href="#python">Python Implementation</a> &nbsp; <a href="#resources">Resources</a></nav></header>
+<div class="hero" id="home"><h1>Principal Component Analysis, explained with 569 tumour samples</h1>
+<p>See how PCA turns 30 correlated measurements into a few uncorrelated directions, with worked maths, Python you can rerun, and eight graphs computed from the real data.</p>
+<a class="btn" href="data/breast_cancer_wisconsin.csv" download>Download Dataset (CSV)</a><a class="btn alt" href="#graphs">Browse the 8 graphs</a></div>
+<div class="layout"><aside class="toc" aria-label="Table of contents"><strong>Contents</strong><div id="toc-links"></div></aside><article>
+
+<section id="concepts"><h2>1. Introduction to PCA</h2>
+<p><b>Dimensionality</b> is the number of features measured per observation. This dataset has 30. <b>Dimensionality reduction</b> re-expresses data with fewer variables while keeping as much useful structure as possible. High dimensions are hard to visualise, often contain redundant features, and can make models noisier.</p>
+<p>Think of measuring a coin's radius, perimeter and area: three numbers, but really one size. <b>Principal Component Analysis</b> finds such shared directions and builds new, uncorrelated variables, <i>principal components</i>, ordered by how much variance they carry.</p>
+<div class="box def"><p class="tag">Definition</p><p>PCA is an unsupervised linear method that finds orthogonal directions of maximum variance in (centred, usually standardised) data and expresses the data in those directions.</p></div>
+<ul><li><b>Feature selection vs extraction:</b> selection keeps some original columns; PCA (extraction) creates new combinations of all of them.</li><li><b>PCA vs K-Means:</b> PCA re-describes features; K-Means groups observations. They answer different questions.</li><li><b>Uses:</b> visualisation, compression, redundancy reduction, preprocessing, exploration.</li><li><b>Limits:</b> linear only, scale and outlier sensitive, components hard to interpret, variance is not the same as relevance.</li></ul>
+<div class="box ex"><p class="tag">Dataset used throughout</p><p>Breast Cancer Wisconsin (Diagnostic) from the <a href="https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic">UCI repository</a>: 569 samples (357 benign, 212 malignant), 30 numeric measurements (10 properties of cell nuclei, each as mean, standard error and worst value), no missing values. <a class="btn" href="data/breast_cancer_wisconsin.csv" download>Download Dataset (CSV)</a></p></div>
+<div class="box lim"><p class="tag">Not a diagnostic tool</p><p>PCA here is an educational analysis. Nothing on this page is medical advice, and a 2-D plot does not establish clinical separability.</p></div>
+<h3>The unlabelled-data rule</h3><p>PCA never sees the <code>diagnosis</code> label. Colours in some graphs are added afterwards, for comparison only.</p>
+<figure id="graph1"><img src="assets/images/pca-original-feature-distribution.png" alt="Scatter of mean radius against mean texture coloured by diagnosis" loading="lazy"><figcaption>Graph 1: pca-original-feature-distribution.png</figcaption></figure>
+<div class="box def"><p class="tag">What Are You Looking At?</p><p>Each dot is one tissue sample, placed by two of the 30 measurements. Colour shows the recorded diagnosis for comparison only.</p><p class="tag">How Was It Calculated?</p><p>Raw values from the CSV; no transformation. Diagnosis is not used by PCA.</p><p class="tag">How Should You Read It?</p><p>x = mean radius, y = mean texture. Blue = benign, red = malignant.</p></div>
+<div class="box key"><p class="tag">Key Takeaways</p><ul><li>Larger mean radius is associated here with malignant samples, but the colours overlap.</li><li>Two features are a small slice of 30 dimensions.</li></ul></div>
+<div class="box lim"><p class="tag">Important Limitation</p><p>A 2-D scatter of raw features is not a diagnostic test and does not show what the other 28 features contain.</p></div></section>
+
+<section id="intuition"><h2>2. The intuition behind PCA</h2>
+<p>When two features are <b>correlated</b> they rise and fall together, so one adds little beyond the other. Picture a cloud of points stretched along a diagonal. The direction of greatest spread is the <b>first principal component</b>: among all linear directions it keeps the most variance when you project onto it. The <b>second</b> captures the most remaining variance while being perpendicular (orthogonal) to the first, and so on.</p>
+<p>A <b>score</b> is an observation's coordinate along a component. Each component is a weighted combination of original features, so PCA is not "picking the most important columns": PC1 is a new variable mixing many columns.</p>
+<figure id="graph3"><img src="assets/images/pca-before-after-projection.png" alt="Two panels showing standardised data with PC arrows, then the same points in PC coordinates" loading="lazy"><figcaption>Graph 3: pca-before-after-projection.png</figcaption></figure>
+<div class="box def"><p class="tag">What Are You Looking At?</p><p>A 2-feature illustration of how PCA rotates the axes.</p><p class="tag">How Was It Calculated?</p><p>150 randomly sampled observations (seed 42), mean radius and mean texture, standardised; PCA fitted on those two columns. Scores satisfy Z = X<sub>c</sub>V (checked in the script).</p><p class="tag">How Should You Read It?</p><p>Left: standardised data with red PC1 and green PC2 arrows (eigenvector scaled by 2·sqrt(eigenvalue)). Right: the same points with axes rotated onto PC1 and PC2. PC1 carries 71.4% and PC2 28.6% of this 2-feature variance.</p></div>
+<div class="box key"><p class="tag">Key Takeaways</p><ul><li>PC1 points along the direction of greatest spread.</li><li>PC1 and PC2 are perpendicular, and no information is lost in a full rotation.</li></ul></div>
+<div class="box lim"><p class="tag">Important Limitation</p><p>This is a two-feature subset, so these percentages do not describe the full 30-feature PCA.</p></div></section>
+
+<section id="mathematics"><h2>3. Mathematics behind PCA</h2>
+<p>Let \(X\) be an \(n\times p\) data matrix (n observations, p features), with entries \(x_{ij}\).</p>
+<div class="formula">$$\mu_j=\frac1n\sum_{i=1}^n x_{ij},\qquad X_c=X-\mu,\qquad C=\frac1{n-1}X_c^\top X_c,\qquad Cv_j=\lambda_j v_j,\qquad Z=X_cV_k$$
+$$r_j=\frac{\lambda_j}{\sum_{\ell=1}^{p}\lambda_\ell},\qquad R_k=\sum_{j=1}^{k}r_j$$</div>
+<p>\(\mu_j\) is the mean of feature j; \(X_c\) the mean-centred matrix; \(C\) the \(p\times p\) sample covariance matrix; \(v_j\) a unit eigenvector (component direction) with eigenvalue \(\lambda_j\) (variance along it); \(V_k\) the \(p\times k\) matrix of the first k eigenvectors; \(Z\) the \(n\times k\) score matrix; \(r_j\) the explained variance ratio; \(R_k\) the cumulative ratio. For <b>standardised PCA</b>, replace \(X_c\) by the standardised matrix \(X_s=(X-\mu)/\sigma\).</p>
+<p>Eigenvectors give directions because \(C\) only stretches them (it does not rotate them); eigenvalues say how much variance lies along each.</p>
+<div class="box ex"><p class="tag">Toy example (4 made-up points; not the cancer data)</p>
+<p>Points: (1,2), (3,3), (5,6), (7,5).</p>
+<p><b>Step 1, means:</b> μ = (4, 4).<br><b>Step 2, centred:</b> (-3, -2); (-1, -1); (1, 2); (3, 1).<br><b>Step 3, sums:</b> Σx² and Σy² = 20, 10, Σxy = 12; divide by n − 1 = 3 to get C = [[6.667, 4.000], [4.000, 3.333]].<br><b>Step 4, eigenvalues</b> (from \(\det(C-\lambda I)=0\)): 9.333 and 0.667. PC1 explains 93.3%.<br><b>Step 5, PC1 direction:</b> v₁ = (0.832, 0.555) (the opposite sign is equally valid).<br><b>Step 6, scores</b> Z = X<sub>c</sub>v₁: -3.61, -1.39, 1.94, 3.05.</p></div>
+<details><summary>Advanced: why the top eigenvector maximises variance</summary><p>The variance of data projected on a unit vector \(u\) is \(u^\top Cu\). Maximising it subject to \(u^\top u=1\) with a Lagrange multiplier gives \(Cu=\lambda u\), and the value reached is \(\lambda\). The largest eigenvalue therefore gives the maximum.</p></details></section>
+
+<section id="covariance"><h2>4. Covariance and correlation</h2>
+<p>Positive covariance: features rise together. Negative: one rises as the other falls. Near zero: no linear relationship. Pearson correlation rescales covariance: \(r_{xy}=\frac{\operatorname{cov}(x,y)}{s_xs_y}\), which equals the covariance of standardised variables. In the toy example r = 0.849.</p>
+<p>Covariance depends on units (change metres to millimetres and it grows), so PCA on the covariance matrix favours large-unit features. PCA on standardised features equals PCA on the sample correlation matrix under standard conventions. Correlated features carry overlapping information, but correlation does not imply causation.</p>
+<p>In the real data, mean radius correlates 0.998 with mean perimeter and 0.987 with mean area, but only 0.324 with mean texture.</p>
+<figure id="graph2"><img src="assets/images/pca-feature-correlation-heatmap.png" alt="Heatmap of correlations among ten mean features" loading="lazy"><figcaption>Graph 2: pca-feature-correlation-heatmap.png</figcaption></figure>
+<div class="box def"><p class="tag">What Are You Looking At?</p><p>How strongly the ten 'mean' features move together.</p><p class="tag">How Was It Calculated?</p><p>Pearson correlations computed on the ten 'mean' measurement columns of all samples.</p><p class="tag">How Should You Read It?</p><p>Red = positive correlation, blue = negative, white = near zero. Mean radius vs mean perimeter: 0.998; vs mean area: 0.987; vs mean texture: 0.32.</p></div>
+<div class="box key"><p class="tag">Key Takeaways</p><ul><li>4 of 100 feature pairs have |r| above 0.9: heavy redundancy.</li><li>The most negative pair is mean radius and mean fractal dimension (-0.31), which is weak.</li></ul></div>
+<div class="box lim"><p class="tag">Important Limitation</p><p>High correlation motivates PCA but does not prove a feature is safe to drop; it could matter for a specific task.</p></div></section>
+
+<section id="eigen"><h2>5. Eigenvalues and eigenvectors</h2>
+<p>Geometrically, an eigenvector is a direction that the matrix only stretches. In PCA the eigenvalue is the variance along that direction. For the toy matrix \(C\) above the eigenvalues are 9.333 and 0.667, so the first direction holds 93.3% of the total.</p>
+<p>Because \(C\) is symmetric, its eigenvectors are orthogonal, which is why components are uncorrelated and perpendicular. Components are ordered by decreasing eigenvalue. If \(v\) is an eigenvector, so is \(-v\): flipping a component's sign changes nothing about the solution, and no orientation is "correct".</p></section>
+
+<section id="preprocessing"><h2>6. Standardization and preprocessing</h2>
+<p>PCA maximises variance, so feature scale matters. <b>Mean-centering</b> only shifts data; <b>standardisation</b> (<code>StandardScaler</code>) also divides by the standard deviation. Handle missing values first (none here), consider outliers (they inflate variance), and exclude identifiers and target labels. Whether to scale depends on the application.</p>
+<div class="box ex"><p class="tag">Actual comparison on this dataset</p><p>Raw feature variances range from 7.0e-06 to 324,167. Unscaled PCA gives PC1 = <b>98.2%</b> of variance, driven mainly by <code>worst area</code>. Standardised PCA gives PC1 = <b>44.3%</b> spread across many features. Unscaled PCA is not "wrong", but it is dominated by large-variance features.</p></div>
+<p><b>Leakage:</b> for a predictive workflow, split first and fit the scaler and PCA on training data only, then apply them to validation/test data. A scikit-learn <code>Pipeline</code> does this automatically.</p></section>
+
+<section id="variance"><h2>7. Explained variance and selecting components</h2>
+<p>The <b>scree plot</b> shows \(r_j\); the cumulative curve shows \(R_k\). Choose k by an elbow heuristic, a threshold (90%, 95%), or by validated downstream performance. More components keep more information but reduce simplification; the best k depends on the task, and high explained variance does not guarantee good prediction.</p>
+<figure id="graph4"><img src="assets/images/pca-explained-variance-scree-plot.png" alt="Bar and line chart of explained variance ratio for each of 30 components" loading="lazy"><figcaption>Graph 4: pca-explained-variance-scree-plot.png</figcaption></figure>
+<div class="box def"><p class="tag">What Are You Looking At?</p><p>How much of the total variance each principal component carries.</p><p class="tag">How Was It Calculated?</p><p>Standardise all 30 features, fit scikit-learn PCA, plot <code>explained_variance_ratio_</code>.</p><p class="tag">How Should You Read It?</p><p>Bars = ratio per component. PC1 44.3%, PC2 19.0%, PC3 9.4%.</p></div>
+<div class="box key"><p class="tag">Key Takeaways</p><ul><li>PC1 alone carries 44.3% of the variance.</li><li>Variance falls quickly: component 10 holds only 1.2%.</li></ul></div>
+<div class="box lim"><p class="tag">Important Limitation</p><p>Any 'elbow' is a visual judgement; there is no single correct cut-off.</p></div><figure id="graph5"><img src="assets/images/pca-cumulative-explained-variance.png" alt="Cumulative explained variance curve with 90 and 95 percent reference lines" loading="lazy"><figcaption>Graph 5: pca-cumulative-explained-variance.png</figcaption></figure>
+<div class="box def"><p class="tag">What Are You Looking At?</p><p>How much variance the first k components keep together.</p><p class="tag">How Was It Calculated?</p><p>Cumulative sum of the explained variance ratios from the standardised 30-feature PCA.</p><p class="tag">How Should You Read It?</p><p>Dashed lines mark 90% and 95%. They are reached at 7 and 10 components; 99% needs 17.</p></div>
+<div class="box key"><p class="tag">Key Takeaways</p><ul><li>7 of 30 components keep 90% of the variance.</li><li>10 components keep 95.2%.</li></ul></div>
+<div class="box lim"><p class="tag">Important Limitation</p><p>Variance thresholds are heuristics. The right k depends on the task, and retained variance does not guarantee predictive performance.</p></div></section>
+
+<section id="projection"><h2>8. PCA projection and dimensionality reduction</h2>
+<p>Projecting to k dimensions is a matrix product: \(Z=X_cV_k\) with shapes \((n\times p)(p\times k)=(n\times k)\). Here, \(569\times30\) times \(30\times2\) gives a \(569\times2\) score matrix. A small example: toy point (1,2) centred is (−3, −2); times v₁ = (0.832, 0.555) gives its PC1 score.</p>
+<p>The new features are uncorrelated mixtures, not original measurements. Information along dropped components is lost. This helps visualisation and redundancy reduction, but PCA features are not automatically better for every model. With PC1 and PC2 we keep 63.2% of the variance.</p>
+<figure id="graph6"><img src="assets/images/pca-two-dimensional-scatter.png" alt="Samples plotted on PC1 and PC2 coloured by diagnosis" loading="lazy"><figcaption>Graph 6: pca-two-dimensional-scatter.png</figcaption></figure>
+<div class="box def"><p class="tag">What Are You Looking At?</p><p>All samples projected onto the first two components.</p><p class="tag">How Was It Calculated?</p><p>PCA on standardised features without labels. Diagnosis only colours the points. PC1 + PC2 retain 63.2%.</p><p class="tag">How Should You Read It?</p><p>x = PC1 score, y = PC2 score. Axis labels give each component's variance share.</p></div>
+<div class="box key"><p class="tag">Key Takeaways</p><ul><li>The two components retain 63.2% of total variance.</li><li>Mean PC1 score is -2.21 for benign and 3.71 for malignant, so the classes tend to sit at different PC1 values, with overlap.</li></ul></div>
+<div class="box lim"><p class="tag">Important Limitation</p><p>PCA did not use diagnosis. A visible split in 2-D is not proof of clinical separability, and this is not a diagnostic tool.</p></div></section>
+
+<section id="loadings"><h2>9. Principal component loadings and interpretation</h2>
+<p>Under the scikit-learn convention, <code>components_</code> holds the eigenvectors (rows), and <b>loadings</b> are commonly defined as eigenvector × √eigenvalue. For standardised data a loading is the correlation between a feature and the component score. Large absolute loadings show which features move with a component. Signs are arbitrary, magnitudes depend on scaling, and with many correlated features it is hard to give a component a clean meaning. Names are only justified when the pattern supports them.</p>
+<figure id="graph7"><img src="assets/images/pca-component-loadings-heatmap.png" alt="Heatmap of loadings for 30 features on the first five components" loading="lazy"><figcaption>Graph 7: pca-component-loadings-heatmap.png</figcaption></figure>
+<div class="box def"><p class="tag">What Are You Looking At?</p><p>Which original features contribute to each component.</p><p class="tag">How Was It Calculated?</p><p>Loadings = eigenvector × sqrt(eigenvalue) from the standardised PCA. Shown: first 5 components (largest variance) and all 30 features.</p><p class="tag">How Should You Read It?</p><p>Colour and numbers show loadings from −1 to 1. For PC1 the largest are mean concave points (0.95), mean concavity (0.94), worst concave points (0.92); 30 of 30 features have the same sign on PC1.</p></div>
+<div class="box key"><p class="tag">Key Takeaways</p><ul><li>PC1 is broadly positive across features, a mix of size and shape measures.</li><li>Signs can be flipped without changing the solution.</li></ul></div>
+<div class="box lim"><p class="tag">Important Limitation</p><p>Loadings are descriptive, depend on scaling, and are not causal effects. Component names should not be invented.</p></div></section>
+
+<section id="compare"><h2>10. PCA vs other dimensionality reduction methods</h2>
+<table><tr><th>Method</th><th>Type</th><th>Objective</th><th>Interpretability</th><th>Best for</th></tr>
+<tr><td>PCA</td><td>Linear, unsupervised</td><td>Maximise retained linear variance</td><td>Moderate (loadings)</td><td>Fast preprocessing, exploration</td></tr>
+<tr><td>Feature selection</td><td>Subset of columns</td><td>Keep useful original features</td><td>High</td><td>When original meaning matters</td></tr>
+<tr><td>LDA</td><td>Linear, supervised</td><td>Directions that separate classes (under its assumptions)</td><td>Moderate</td><td>Classification with labels</td></tr>
+<tr><td>t-SNE</td><td>Nonlinear</td><td>Preserve local neighbourhoods</td><td>Low; distances between far clusters unreliable</td><td>2-D visualisation only</td></tr>
+<tr><td>UMAP</td><td>Nonlinear</td><td>Preserve neighbourhood graph structure</td><td>Low</td><td>Visualisation, some preprocessing</td></tr>
+<tr><td>Autoencoders</td><td>Nonlinear, neural</td><td>Minimise reconstruction error</td><td>Low</td><td>Large, complex data; needs tuning</td></tr></table>
+<p>No method is universally best: the choice depends on whether you have labels, need interpretability, expect nonlinearity, and your compute budget.</p></section>
+
+<section id="python"><h2>11. Python implementation</h2><p><a class="btn" href="data/breast_cancer_wisconsin.csv" download>Download Dataset (CSV)</a> Pandas loads and inspects, StandardScaler standardises, PCA fits. Everything below is computed, nothing hard-coded. The full graph script is <code>generate_graphs.py</code>.</p>
+<pre><code>import numpy as np, pandas as pd, seaborn as sns, matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LogisticRegression
+
+df = pd.read_csv("data/breast_cancer_wisconsin.csv")                  # 1. load
+print(df.shape, df.dtypes.unique(), df.isna().sum().sum())             # 2. inspect
+y = df["diagnosis"]                                                    # 3. label kept separate
+X = df.drop(columns=["diagnosis"])                                     #    (also drop "id" if present)
+X = X.fillna(X.median())                                               # 4. no-op here: 0 missing
+Xs = StandardScaler().fit_transform(X)                                 # 5. standardise
+pca = PCA().fit(Xs)                                                    # 6. fit PCA
+evr, cum = pca.explained_variance_ratio_, pca.explained_variance_ratio_.cumsum()
+print(pca.explained_variance_[:3], evr[:3])                            # 7. eigenvalues and ratios
+plt.plot(range(1, len(evr) + 1), cum, marker="o"); plt.show()          # 8. cumulative plot
+Z2 = PCA(n_components=2).fit_transform(Xs)                             # 9. scores on PC1, PC2
+sns.scatterplot(x=Z2[:, 0], y=Z2[:, 1], hue=y); plt.show()             # 10. colour only, not used in fit
+loadings = pd.DataFrame(pca.components_.T * np.sqrt(pca.explained_variance_),
+                        index=X.columns, columns=[f"PC{i+1}" for i in range(Xs.shape[1])])  # 11
+p5 = PCA(n_components=5).fit(Xs)
+Xhat = p5.inverse_transform(p5.transform(Xs))                          # 12. reconstruct
+print(np.mean((Xs - Xhat) ** 2))                                       # 13. reconstruction MSE
+print(PCA().fit(X).explained_variance_ratio_[0], evr[0])               # 14. unscaled vs scaled PC1
+# Leakage-safe predictive workflow: preprocessing is fitted on training data only
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, stratify=y, random_state=42)
+pipe = make_pipeline(StandardScaler(), PCA(n_components=0.95), LogisticRegression(max_iter=5000))
+print(pipe.fit(Xtr, ytr).score(Xte, yte))</code></pre>
+<p><code>explained_variance_</code> are the eigenvalues; <code>explained_variance_ratio_</code> are the \(r_j\); <code>fit_transform</code> returns scores; <code>inverse_transform</code> reconstructs. In the pipeline, <code>PCA(n_components=0.95)</code> keeps enough components for 95% variance on the training set.</p></section>
+
+<section id="evaluation"><h2>12. Evaluating PCA results</h2>
+<ul><li><b>Explained variance:</b> first three components: 44.3%, 19.0%, 9.4%; 90% at 7 components, 95% at 10, 99% at 17.</li><li><b>Reconstruction error</b> (MSE, standardised units): k = 1: 0.5573, k = 2: 0.3676, k = 5: 0.1527, k = 10: 0.0484.</li><li><b>Loadings and 2-D plots</b> are visual, descriptive checks.</li></ul>
+<figure id="graph8"><img src="assets/images/pca-reconstruction-error.png" alt="Line chart of mean squared reconstruction error against components retained" loading="lazy"><figcaption>Graph 8: pca-reconstruction-error.png</figcaption></figure>
+<div class="box def"><p class="tag">What Are You Looking At?</p><p>How well the original standardised data can be rebuilt from k components.</p><p class="tag">How Was It Calculated?</p><p>For each k, fit PCA, reconstruct with <code>inverse_transform</code>, and compute mean squared error over all entries of the standardised matrix.</p><p class="tag">How Should You Read It?</p><p>Error at k = 1: 0.5573, k = 2: 0.3676, k = 5: 0.1527, k = 10: 0.0484, k = 10: 0.0484.</p></div>
+<div class="box key"><p class="tag">Key Takeaways</p><ul><li>Error decreases as components are added and reaches ~0 at k = 30.</li><li>Most reduction comes from the first few components.</li></ul></div>
+<div class="box lim"><p class="tag">Important Limitation</p><p>Good reconstruction is not the same as good prediction; a component that matters for a task may carry little variance.</p></div>
+<div class="box ex"><p class="tag">Supervised check (diagnosis used here, with leakage-safe pipelines)</p>
+<table><tr><th>Model (75/25 stratified split, seed 42)</th><th>Test accuracy</th><th>Test ROC AUC</th></tr>
+<tr><td>Standardise + logistic regression (30 features)</td><td>96.5%</td><td>0.996</td></tr>
+<tr><td>Standardise + PCA (10 comps, 95%) + logistic regression</td><td>97.2%</td><td>0.997</td></tr>
+<tr><td>Standardise + PCA (2 comps) + logistic regression</td><td>93.7%</td><td>0.997</td></tr></table>
+<p>On this single split the differences are small and may be within noise (143 test samples). PCA is not guaranteed to improve performance, and this is an educational comparison, not clinical validation.</p></div></section>
+
+<section id="mistakes"><h2>13. Common PCA mistakes</h2>
+<table><tr><th>Mistake</th><th>Practical correction</th></tr>
+<tr><td>Not standardising when scales differ (unscaled PC1 = 98.2%)</td><td>Use StandardScaler, or justify why not</td></tr>
+<tr><td>Including an ID column or target label in the input</td><td>Drop them before fitting</td></tr>
+<tr><td>Fitting scaler/PCA on all data before a split</td><td>Use a Pipeline fitted on training data</td></tr>
+<tr><td>Confusing scores with loadings</td><td>Scores describe observations; loadings describe features</td></tr>
+<tr><td>Reading eigenvalues as percentages</td><td>Divide by their sum to get \(r_j\)</td></tr>
+<tr><td>Treating PC1 as an original feature, or sign as meaningful</td><td>PC1 is a mixture; flip signs freely</td></tr>
+<tr><td>Picking k only to hit a threshold</td><td>Validate on the task</td></tr>
+<tr><td>Assuming high variance means predictive usefulness</td><td>Evaluate downstream</td></tr>
+<tr><td>Treating a 2-D plot as proof of separability</td><td>Use proper supervised evaluation</td></tr>
+<tr><td>Ignoring outliers or missing values</td><td>Inspect and treat before PCA</td></tr>
+<tr><td>Reading components as causes</td><td>They are descriptive summaries</td></tr></table></section>
+
+<section id="applications"><h2>14. Real-world applications of PCA</h2>
+<table><tr><th>Use</th><th>Benefit</th><th>Limitation / when not appropriate</th></tr>
+<tr><td>Visualisation</td><td>2-D/3-D views of high-dimensional data</td><td>Hides variance beyond shown components</td></tr>
+<tr><td>Image compression</td><td>Keep top components</td><td>Lossy; modern codecs often do better</td></tr>
+<tr><td>Genomics exploration</td><td>Reveals batch and population structure</td><td>Linear; needs careful scaling</td></tr>
+<tr><td>Feature reduction before ML</td><td>Fewer, uncorrelated inputs</td><td>May discard label-relevant low variance</td></tr>
+<tr><td>Exploratory analysis</td><td>Finds dominant patterns quickly</td><td>Components may be uninterpretable</td></tr>
+<tr><td>Noise reduction</td><td>Drop low-variance components if noise lives there</td><td>Fails if signal is also low variance</td></tr>
+<tr><td>Anomaly detection</td><td>Large reconstruction error flags unusual points</td><td>Outliers distort the PCA itself</td></tr>
+<tr><td>Reducing redundancy</td><td>Merges correlated measurements</td><td>Loses original feature meaning</td></tr></table>
+<p>PCA is not a substitute for domain expertise or task-specific validation.</p></section>
+
+<section id="interview"><h2>15. Interview questions and revision notes</h2><button class="btn alt" id="toggle-qa" type="button">Expand all answers</button><details><summary>What is PCA?</summary><p>An unsupervised linear technique that rotates mean-centred (usually standardised) data onto orthogonal directions, the principal components, ordered by how much variance they capture.</p></details><details><summary>Why use PCA?</summary><p>To visualise high-dimensional data, reduce redundancy among correlated features, compress data, and sometimes speed up or stabilise downstream models. It is not guaranteed to improve prediction.</p></details><details><summary>What are principal components?</summary><p>New variables that are linear combinations of the original features. Component j has weights given by eigenvector \(v_j\), and the scores are the data projected onto it.</p></details><details><summary>Role of eigenvalues and eigenvectors?</summary><p>Eigenvectors of the covariance matrix give the component directions; the matching eigenvalues give the variance along each direction.</p></details><details><summary>What is the covariance matrix?</summary><p>A p × p symmetric matrix whose entries are covariances between feature pairs; diagonal entries are variances. \(C=\tfrac1{n-1}X_c^\top X_c\).</p></details><details><summary>Why standardise?</summary><p>PCA maximises variance, so features with large numeric variance dominate. Here the largest raw feature variance is 324,167 and the smallest 7.0e-06; unscaled PC1 captures 98.2% mostly from one feature.</p></details><details><summary>Explained variance ratio?</summary><p>\(r_j=\lambda_j/\sum_\ell\lambda_\ell\): the share of total variance carried by component j.</p></details><details><summary>Cumulative explained variance?</summary><p>\(R_k=\sum_{j\le k}r_j\), the share kept by the first k components. On this data 7 components reach 90% and 10 reach 95%.</p></details><details><summary>What are loadings?</summary><p>In scikit-learn terms, eigenvectors scaled by the square root of the eigenvalues, \(v_j\sqrt{\lambda_j}\). For standardised data they are the correlations between features and component scores. Scikit-learn's <code>components_</code> holds the unscaled eigenvectors.</p></details><details><summary>PCA vs feature selection?</summary><p>Selection keeps a subset of original columns; PCA builds new combinations of all columns, which are harder to interpret.</p></details><details><summary>PCA vs LDA?</summary><p>PCA is unsupervised and maximises variance; LDA uses class labels to find directions that separate classes under its assumptions.</p></details><details><summary>What is reconstruction error?</summary><p>The mean squared difference between data and its reconstruction \(\hat X=ZV_k^\top\) from k components. It falls as k grows and is zero at k = p.</p></details><details><summary>What is data leakage in PCA?</summary><p>Fitting the scaler or PCA on all data before a train/test split lets test information shape the transformation. Fit on training data only, ideally inside a pipeline.</p></details><details><summary>Limitations of PCA?</summary><p>Linear only, sensitive to scaling and outliers, components can be hard to interpret, and maximum variance need not mean maximum usefulness for a task.</p></details>
+<h3>Summary</h3><p>Centre and (usually) standardise, compute the covariance matrix, take its eigenvectors as directions and eigenvalues as variances, project to the top k, then check explained variance, reconstruction error and downstream validity. Here 10 of 30 components keep 95% of the variance.</p>
+<h3>Formula revision sheet</h3><div class="formula">$$\mu_j=\tfrac1n\sum_i x_{ij},\ X_c=X-\mu,\ C=\tfrac1{n-1}X_c^\top X_c,\ Cv_j=\lambda_jv_j,\ Z=X_cV_k,\ r_j=\tfrac{\lambda_j}{\sum\lambda_\ell},\ R_k=\sum_{j\le k}r_j$$</div>
+<h3>PCA workflow checklist</h3><ul><li>Drop identifiers and labels; check missing values and outliers.</li><li>Split first if the goal is prediction.</li><li>Standardise (fit on training data).</li><li>Fit PCA; inspect scree, cumulative variance, loadings.</li><li>Choose k with a justified rule and validate downstream.</li><li>Report limitations; avoid causal or clinical claims.</li></ul></section>
+
+<section id="graphs"><h2>PCA graph gallery</h2><p>Eight graphs generated by <code>generate_graphs.py</code>. Select one to jump to it.</p><div class="gallery"><a href="#graph1"><img src="assets/images/pca-original-feature-distribution.png" alt="Scatter of mean radius against mean texture coloured by diagnosis" loading="lazy">Graph 1</a><a href="#graph2"><img src="assets/images/pca-feature-correlation-heatmap.png" alt="Heatmap of correlations among ten mean features" loading="lazy">Graph 2</a><a href="#graph3"><img src="assets/images/pca-before-after-projection.png" alt="Two panels showing standardised data with PC arrows, then the same points in PC coordinates" loading="lazy">Graph 3</a><a href="#graph4"><img src="assets/images/pca-explained-variance-scree-plot.png" alt="Bar and line chart of explained variance ratio for each of 30 components" loading="lazy">Graph 4</a><a href="#graph5"><img src="assets/images/pca-cumulative-explained-variance.png" alt="Cumulative explained variance curve with 90 and 95 percent reference lines" loading="lazy">Graph 5</a><a href="#graph6"><img src="assets/images/pca-two-dimensional-scatter.png" alt="Samples plotted on PC1 and PC2 coloured by diagnosis" loading="lazy">Graph 6</a><a href="#graph7"><img src="assets/images/pca-component-loadings-heatmap.png" alt="Heatmap of loadings for 30 features on the first five components" loading="lazy">Graph 7</a><a href="#graph8"><img src="assets/images/pca-reconstruction-error.png" alt="Line chart of mean squared reconstruction error against components retained" loading="lazy">Graph 8</a></div></section>
+<section id="resources"><h2>Resources</h2><ul><li><a href="data/breast_cancer_wisconsin.csv" download>Download Dataset (CSV)</a></li><li><a href="https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic">UCI dataset page</a></li><li><a href="https://scikit-learn.org/stable/modules/decomposition.html#pca">scikit-learn PCA docs</a></li></ul></section>
+</article></div>
+<footer><p><a href="data/breast_cancer_wisconsin.csv" download>Download Dataset (CSV)</a> &nbsp;|&nbsp; <a href="https://github.com/YOUR-USERNAME/pca-machine-learning-blog">GitHub repository (replace with your URL)</a></p></footer>
+<script src="js/main.js"></script></body></html>
